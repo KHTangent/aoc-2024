@@ -7,10 +7,19 @@ from sys import argv
 
 file_main_rs = """use std::fs;
 
-fn solution(input: &String) -> i32 {
+fn solution(input: &String) -> i64 {
 	let mut sum = 0;
 	for line in input.lines() {
-		let num = line.parse::<i32>().unwrap_or(0);
+		let num = line.parse::<i64>().unwrap_or(0);
+		sum += num;
+	}
+	sum
+}
+
+fn solution2(input: &String) -> i64 {
+	let mut sum = 0;
+	for line in input.lines() {
+		let num = line.parse::<i64>().unwrap_or(0);
 		sum += num;
 	}
 	sum
@@ -27,6 +36,15 @@ mod tests {
 		let answer = solution(&input);
 		assert_eq!(answer, 6);
 	}
+
+	#[test]
+	fn test_solution2() {
+		let input = String::from(r"2
+4
+");
+		let answer = solution2(&input);
+		assert_eq!(answer, 6);
+	}
 }
 
 fn get_entire_input_file() -> String {
@@ -36,8 +54,11 @@ fn get_entire_input_file() -> String {
 }
 
 fn main() {
-	let answer = solution(&get_entire_input_file());
-	println!("Answer: {}", answer);
+    let file = get_entire_input_file();
+	let answer = solution(&file);
+	println!("Answer task 1: {}", answer);
+	let answer = solution2(&file);
+	println!("Answer task 2: {}", answer);
 }
 """
 
@@ -54,7 +75,7 @@ file_rustfmt_toml = "hard_tabs = true"
 
 def main():
     if len(argv) > 1:
-        day_of_month = argv[1]
+        day_of_month = int(argv[1])
     else:
         day_of_month = datetime.now().day
     dir_name = f"day-{day_of_month:02}"
