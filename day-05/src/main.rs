@@ -55,9 +55,34 @@ fn solution(input: &String) -> i64 {
 
 fn solution2(input: &String) -> i64 {
 	let mut sum = 0;
-	for line in input.lines() {
-		let num = line.parse::<i64>().unwrap_or(0);
-		sum += num;
+	let (rules, rows) = input.split_once("\n\n").unwrap();
+	let not_preceded_by_map = create_rule_map(rules);
+	let parsed_lines: Vec<Vec<i64>> = rows
+		.lines()
+		.map(|line| line.split(",").map(|n| n.parse().unwrap()).collect())
+		.filter(|line| !check_line(&line, &not_preceded_by_map))
+		.collect();
+	for mut row in parsed_lines {
+		row.sort_by(|a, b| {
+			match not_preceded_by_map.get(a) {
+				Some(numbers) => {
+					if numbers.contains(b) {
+						return std::cmp::Ordering::Less;
+					}
+				}
+				None => {}
+			};
+			match not_preceded_by_map.get(b) {
+				Some(numbers) => {
+					if numbers.contains(a) {
+						return std::cmp::Ordering::Greater;
+					}
+				}
+				None => {}
+			};
+			std::cmp::Ordering::Equal
+		});
+		sum += row[row.len() / 2];
 	}
 	sum
 }
@@ -106,12 +131,38 @@ mod tests {
 	#[test]
 	fn test_solution2() {
 		let input = String::from(
-			r"2
-4
+			r"47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47
 ",
 		);
 		let answer = solution2(&input);
-		assert_eq!(answer, 6);
+		assert_eq!(answer, 123);
 	}
 }
 
