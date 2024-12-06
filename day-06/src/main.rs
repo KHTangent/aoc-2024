@@ -122,14 +122,14 @@ fn solution2(input: &String) -> i64 {
 			let mut sum = 0;
 			let mut map = map.clone();
 			for x in 0..map[0].len() {
-				if map[x][y] == TileType::WALL || current_guard_pos == (x, y, Facing::UP) {
+				if map[y][x] == TileType::WALL || current_guard_pos == (x, y, Facing::UP) {
 					continue;
 				}
-				map[x][y] = TileType::WALL;
+				map[y][x] = TileType::WALL;
 				if test_map(&map, current_guard_pos.clone()) == -1 {
 					sum += 1;
 				}
-				map[x][y] = TileType::SPACE;
+				map[y][x] = TileType::SPACE;
 			}
 			sum
 		})
