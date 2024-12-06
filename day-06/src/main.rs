@@ -1,6 +1,8 @@
 use std::{collections::HashSet, fs};
 
-#[derive(Eq, PartialEq)]
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
+#[derive(Eq, PartialEq, Clone)]
 enum TileType {
 	WALL,
 	SPACE,
@@ -95,9 +97,8 @@ fn solution(input: &String) -> i64 {
 }
 
 fn solution2(input: &String) -> i64 {
-	let mut sum = 0;
 	let mut current_guard_pos = (0, 0, Facing::UP);
-	let mut map: Vec<Vec<TileType>> = input
+	let map: Vec<Vec<TileType>> = input
 		.lines()
 		.enumerate()
 		.map(|(row, line)| {
@@ -115,20 +116,25 @@ fn solution2(input: &String) -> i64 {
 				.collect()
 		})
 		.collect();
-	for y in 0..map.len() {
-		println!("Testing row {}/{}", y, map.len());
-		for x in 0..map[0].len() {
-			if map[x][y] == TileType::WALL || current_guard_pos == (x, y, Facing::UP) {
-				continue;
+	let total = (0..map.len())
+		.into_par_iter()
+		.map(|y| {
+			let mut sum = 0;
+			let mut map = map.clone();
+			for x in 0..map[0].len() {
+				if map[x][y] == TileType::WALL || current_guard_pos == (x, y, Facing::UP) {
+					continue;
+				}
+				map[x][y] = TileType::WALL;
+				if test_map(&map, current_guard_pos.clone()) == -1 {
+					sum += 1;
+				}
+				map[x][y] = TileType::SPACE;
 			}
-			map[x][y] = TileType::WALL;
-			if test_map(&map, current_guard_pos.clone()) == -1 {
-				sum += 1;
-			}
-			map[x][y] = TileType::SPACE;
-		}
-	}
-	sum
+			sum
+		})
+		.sum();
+	total
 }
 
 #[cfg(test)]
