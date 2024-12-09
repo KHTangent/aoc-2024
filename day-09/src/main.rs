@@ -1,6 +1,6 @@
 use std::fs;
 
-fn solution(input: &String) -> i64 {
+fn parse_individual(input: &String) -> Vec<Option<i64>> {
 	let mut buffer: Vec<Option<i64>> = Vec::with_capacity(input.len() * 7);
 	for (index, char) in input.trim().bytes().enumerate() {
 		let char_number = char - '0' as u8;
@@ -15,6 +15,18 @@ fn solution(input: &String) -> i64 {
 			}
 		}
 	}
+	buffer
+}
+
+fn calculate_checksum(buffer: &Vec<Option<i64>>) -> i64 {
+	buffer
+		.iter()
+		.enumerate()
+		.fold(0, |prev, (i, el)| prev + (i as i64) * el.unwrap_or(0))
+}
+
+fn solution(input: &String) -> i64 {
+	let mut buffer = parse_individual(input);
 	for i in (0..buffer.len()).rev() {
 		if let Some(_) = buffer[i] {
 			let first_empty_index = buffer.iter().position(|b| b.is_none());
@@ -24,19 +36,49 @@ fn solution(input: &String) -> i64 {
 			buffer.swap(i, first_empty_index.unwrap());
 		}
 	}
-	buffer
-		.iter()
-		.enumerate()
-		.fold(0, |prev, (i, el)| prev + (i as i64) * el.unwrap_or(0))
+	calculate_checksum(&buffer)
 }
 
 fn solution2(input: &String) -> i64 {
-	let mut sum = 0;
-	for line in input.lines() {
-		let num = line.parse::<i64>().unwrap_or(0);
-		sum += num;
+	let mut buffer = parse_individual(input);
+	let mut search_backwards_from = buffer.len() as i64;
+	loop {
+		let file_end = (0..search_backwards_from)
+			.rev()
+			.find(|&i| buffer[i as usize].is_some())
+			.unwrap() as i64;
+		let file_start = (0..file_end).rev().find(|&i| {
+			i == 0 || buffer[i as usize].is_none_or(|c| c != buffer[file_end as usize].unwrap())
+		});
+		let file_start = match file_start {
+			Some(n) => n + 1,
+			None => break,
+		};
+		let file_length = file_end - file_start;
+		let free_space_start = (0..file_start).find(|&i| match buffer[i as usize] {
+			Some(_) => false,
+			None => {
+				for j in i + 1..i + 1 + file_length {
+					if buffer[j as usize].is_some() {
+						return false;
+					}
+				}
+				true
+			}
+		});
+		match free_space_start {
+			Some(free_space_start) => {
+				for i in 0..file_length + 1 {
+					buffer.swap((file_start + i) as usize, (free_space_start + i) as usize);
+				}
+			}
+			None => search_backwards_from = file_start,
+		}
+		if search_backwards_from <= 0 {
+			break;
+		}
 	}
-	sum
+	calculate_checksum(&buffer)
 }
 
 #[cfg(test)]
@@ -52,13 +94,9 @@ mod tests {
 
 	#[test]
 	fn test_solution2() {
-		let input = String::from(
-			r"2
-4
-",
-		);
+		let input = String::from(r"2333133121414131402");
 		let answer = solution2(&input);
-		assert_eq!(answer, 6);
+		assert_eq!(answer, 2858);
 	}
 }
 
