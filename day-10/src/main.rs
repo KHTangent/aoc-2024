@@ -1,16 +1,8 @@
 use std::{collections::HashMap, fs};
 
-#[derive(Clone, Eq, PartialEq, Debug)]
-enum Direction {
-	NONE,
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT,
-}
-
 type Map = Vec<Vec<u8>>;
 type PointSet = HashMap<(usize, usize), i64>;
+
 fn parse_map(input: &String) -> Map {
 	input
 		.lines()
@@ -18,61 +10,44 @@ fn parse_map(input: &String) -> Map {
 		.collect()
 }
 
-fn traverse_find(map: &Map, x: usize, y: usize, came_from: Direction, found_tops: &mut PointSet) {
-	if x > 0 && came_from != Direction::LEFT {
+fn insert_or_increment(point_set: &mut PointSet, x: usize, y: usize) {
+	match point_set.get_mut(&(x, y)) {
+		Some(n) => {
+			*n += 1;
+		}
+		None => {
+			point_set.insert((x, y), 1);
+		}
+	};
+}
+
+fn traverse_find(map: &Map, x: usize, y: usize, found_tops: &mut PointSet) {
+	if x > 0 {
 		if map[y][x] == 8 && map[y][x - 1] == 9 {
-			match found_tops.get_mut(&(x - 1, y)) {
-				Some(n) => {
-					*n += 1;
-				}
-				None => {
-					found_tops.insert((x - 1, y), 1);
-				}
-			};
+			insert_or_increment(found_tops, x - 1, y);
 		} else if map[y][x] + 1 == map[y][x - 1] {
-			traverse_find(map, x - 1, y, Direction::RIGHT, found_tops);
+			traverse_find(map, x - 1, y, found_tops);
 		}
 	}
-	if x < map[0].len() - 1 && came_from != Direction::RIGHT {
+	if x < map[0].len() - 1 {
 		if map[y][x] == 8 && map[y][x + 1] == 9 {
-			match found_tops.get_mut(&(x + 1, y)) {
-				Some(n) => {
-					*n += 1;
-				}
-				None => {
-					found_tops.insert((x + 1, y), 1);
-				}
-			};
+			insert_or_increment(found_tops, x + 1, y);
 		} else if map[y][x] + 1 == map[y][x + 1] {
-			traverse_find(map, x + 1, y, Direction::LEFT, found_tops);
+			traverse_find(map, x + 1, y, found_tops);
 		}
 	}
-	if y > 0 && came_from != Direction::UP {
+	if y > 0 {
 		if map[y][x] == 8 && map[y - 1][x] == 9 {
-			match found_tops.get_mut(&(x, y - 1)) {
-				Some(n) => {
-					*n += 1;
-				}
-				None => {
-					found_tops.insert((x, y - 1), 1);
-				}
-			};
+			insert_or_increment(found_tops, x, y - 1);
 		} else if map[y][x] + 1 == map[y - 1][x] {
-			traverse_find(map, x, y - 1, Direction::DOWN, found_tops);
+			traverse_find(map, x, y - 1, found_tops);
 		}
 	}
-	if y < map.len() - 1 && came_from != Direction::DOWN {
+	if y < map.len() - 1 {
 		if map[y][x] == 8 && map[y + 1][x] == 9 {
-			match found_tops.get_mut(&(x, y + 1)) {
-				Some(n) => {
-					*n += 1;
-				}
-				None => {
-					found_tops.insert((x, y + 1), 1);
-				}
-			};
+			insert_or_increment(found_tops, x, y + 1);
 		} else if map[y][x] + 1 == map[y + 1][x] {
-			traverse_find(map, x, y + 1, Direction::UP, found_tops);
+			traverse_find(map, x, y + 1, found_tops);
 		}
 	}
 }
@@ -84,7 +59,7 @@ fn solution(input: &String) -> i64 {
 		for x in 0..map[y].len() {
 			if map[y][x] == 0 {
 				let mut tops = PointSet::new();
-				traverse_find(&map, x, y, Direction::NONE, &mut tops);
+				traverse_find(&map, x, y, &mut tops);
 				sum += tops.len();
 			}
 		}
@@ -99,7 +74,7 @@ fn solution2(input: &String) -> i64 {
 		for x in 0..map[y].len() {
 			if map[y][x] == 0 {
 				let mut tops = PointSet::new();
-				traverse_find(&map, x, y, Direction::NONE, &mut tops);
+				traverse_find(&map, x, y, &mut tops);
 				sum += tops.values().sum::<i64>();
 			}
 		}
