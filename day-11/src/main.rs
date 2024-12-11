@@ -1,19 +1,12 @@
-use std::fs;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 fn solution(input: &str, blinks: usize) -> i64 {
 	let mut stones: Vec<i64> = input
 		.split(" ")
 		.map(|s| s.parse::<i64>().unwrap())
 		.collect();
-	let mut last_len = stones.len();
-	for generation in 0..blinks {
-		println!(
-			"Starting generation {}, have {} stones, increase by {}",
-			generation,
-			stones.len(),
-			stones.len() as f64 / (last_len as f64)
-		);
-		last_len = stones.len();
+	let mut generations_processed = 0;
+	for _ in 0..blinks.min(40) {
 		let mut new_stones: Vec<i64> = Vec::with_capacity(stones.len() * 2);
 		for stone in stones {
 			let stone_string = stone.to_string();
@@ -28,8 +21,16 @@ fn solution(input: &str, blinks: usize) -> i64 {
 			}
 		}
 		stones = new_stones;
+		generations_processed += 1;
 	}
-	stones.len() as i64
+	if generations_processed < blinks {
+		stones
+			.into_par_iter()
+			.map(|stone| solution(stone.to_string().as_str(), blinks - 40))
+			.sum::<i64>()
+	} else {
+		stones.len() as i64
+	}
 }
 
 #[cfg(test)]
@@ -42,13 +43,19 @@ mod tests {
 		let answer = solution(&input, 6);
 		assert_eq!(answer, 22);
 	}
+
+	#[test]
+	fn test_solution2() {
+		let input = String::from(r"125 17");
+		let answer = solution(&input, 25);
+		assert_eq!(answer, 55312);
+	}
 }
 
 fn main() {
 	let input = "3028 78 973951 5146801 5 0 23533 857";
 	let answer = solution(&input, 25);
 	println!("Answer task 1: {}", answer);
-	// Will get killed by the OOM killer
-	// let answer = solution(&input, 75);
-	// println!("Answer task 2: {}", answer);
+	let answer = solution(&input, 75);
+	println!("Answer task 2: {}", answer);
 }
